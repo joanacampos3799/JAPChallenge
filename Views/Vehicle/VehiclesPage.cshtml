@@ -1,0 +1,144 @@
+﻿@model List<JAPChallenge.Models.VehicleViewModel>
+@{
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Vehicles</h2>
+    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasVehicle" aria-controls="offcanvasVehicle">
+        Register a Vehicle
+    </button>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasVehicle" aria-labelledby="offcanvasVehicleLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasVehicleLabel">Add a new Vehicle</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column" style="height: 100%; padding-bottom: 1rem;">
+        <form method="post" asp-action="RegisterVehicle" asp-controller="Vehicle" class="flex-grow-1">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="brandInput" class="form-label">Brand</label>
+                    <input type="text" class="form-control" id="brandInput" name="Brand" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="modelInput" class="form-label">Model</label>
+                    <input type="text" class="form-control" id="modelInput" name="Model" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="registrationInput" class="form-label">Licence Plate</label>
+                    <input type="text" class="form-control" id="registrationInput" name="Registration" required>
+                    <span id="licencePlateError" class="text-danger" style="display:none;"></span>
+                </div>
+                <div class="col-md-6">
+                    <label for="yearInput" class="form-label">Year of Fabrication</label>
+                    <input type="number" class="form-control" id="yearInput" name="YearOfFabrication" required>
+                    <span id="yearError" class="text-danger" style="display:none;"></span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label for="fuelTypeInput" class="form-label">Fuel Type</label>
+                <select id="fuelTypeInput" name="FuelType" class="form-control">
+                    <option value="">-- Select Fuel Type --</option>
+                    @foreach (var fuelType in ViewBag.FuelTypes as List<SelectListItem>)
+                    {
+                        <option value="@fuelType.Value">@fuelType.Text</option>
+                    }
+                </select>
+            </div>
+            <!-- Spacer for the button at the bottom -->
+            <div class="d-flex justify-content-end align-items-end mt-3">
+                <button id="submitButton" type="submit" class="btn btn-primary w-100">Submit Vehicle</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<table class="table mt-4">
+    <thead class="table-primary">
+        <tr>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Licence Plate</th>
+            <th>Year</th>
+            <th>Fuel Type</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            @foreach (var vehicle in Model)
+            {
+                <tr>
+                    <td>@vehicle.Brand</td>
+                    <td>@vehicle.Model</td>
+                    <td>@vehicle.Registration</td>
+                    <td>@vehicle.YearOfFabrication</td>
+                    <td>@vehicle.FuelType</td>
+                    @if(vehicle.Status == "Rented")
+                    {
+                        <td class="text-danger">@vehicle.Status</td>
+                    }
+                    else
+                    {
+                        <td class="text-success">@vehicle.Status</td>
+                    }
+                       
+
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center">No vehicles available.</td>
+            </tr>
+        }
+       
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function () {
+        $("#yearInput").on("blur", function () {
+            var year = parseInt($(this).val(), 10);
+            var currentYear = new Date().getFullYear();
+            var errorLabel = $("#yearError");
+            var submitButton = $("#submitButton");
+
+            if (year > currentYear) {
+                errorLabel.text("Year of fabrication must be before the current year!").show();
+                submitButton.prop("disabled", true);
+            } else {
+                errorLabel.hide();
+                submitButton.prop("disabled", false);
+            }
+        });
+
+        $("#registrationInput").on("blur", function () {
+            const licencePlate = $(this).val();
+            const errorMessage = $("#licencePlateError");
+
+            $.ajax({
+                url: "/Vehicle/CheckLicencePlate",
+                method: "GET",
+                data: { licencePlate: licencePlate },
+                success: function (isUnique) {
+                    if (!isUnique) {
+                        errorMessage.text("The license plate must be unique.").show();
+                        $("#submitButton").prop("disabled", true);
+                    } else {
+                        errorMessage.text("").hide();
+                        $("#submitButton").prop("disabled", false);
+                    }
+                },
+                error: function () {
+                    errorMessage.text("An error occurred while validating the license plate.").show();
+                }
+            });
+        });
+    });
+</script>

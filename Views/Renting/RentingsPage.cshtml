@@ -1,0 +1,136 @@
+﻿
+@model List<JAPChallenge.Models.RentingModel>
+@{
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Rentings</h2>
+    <button class="btn btn-success" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRenting" aria-controls="offcanvasRenting">
+        Register Renting
+    </button>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasRenting" aria-labelledby="offcanvasRentingLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasRentingLabel">Add a new Renting</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column" style="height: 100%; padding-bottom: 1rem;">
+        <form method="post" asp-action="RegisterRenting" asp-controller="Renting" class="flex-grow-1">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="clientSelect" class="form-label">Clients</label>
+                    <select id="clientSelect" name="ClientId" class="form-control" required>
+                        <option value="">-- Select Client --</option>
+                        @foreach (var client in ViewBag.Clients as List<SelectListItem>)
+                        {
+                            <option value="@client.Value">@client.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="vehicleSelect" class="form-label">Vehicles</label>
+                    <select id="vehicleSelect" name="VehicleId" class="form-control" required>
+                        <option value="">-- Select Vehicle --</option>
+                        @foreach (var vehicle in ViewBag.Vehicles as List<SelectListItem>)
+                        {
+                            <option value="@vehicle.Value">@vehicle.Text</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="startDateInput" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDateInput" name="InitialDate" required>
+                    <span id="startDateError" class="text-danger" style="display: none;"></span>
+                </div>
+                <div class="col-md-6">
+                    <label for="endDateInput" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDateInput" name="EndDate" required>
+                    <span id="endDateError" class="text-danger" style="display: none;"></span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label for="initKmsInput" class="form-label">Initial Kilometers</label>
+                <input type="number" class="form-control" id="modelInput" name="InitialKms" required>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button id="submitButton" type="submit" class="btn btn-success w-100">Submit Renting</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<table class="table mt-4">
+    <thead class="table-success">
+        <tr>
+            <th>Client</th>
+            <th>Vehicle</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Initial Kilometers</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            @foreach (var renting in Model)
+            {
+                <tr>
+                    <td>@renting.Client.FullName</td>
+                    <td>@renting.Vehicle.Brand @renting.Vehicle.Model (@renting.Vehicle.license_plate)</td>
+                    <td>@renting.InitialDate.Value.ToString("d")</td>
+                    <td>@renting.EndDate.Value.ToString("d")</td>
+                    <td>@renting.InitialKms</td>
+                </tr>
+            }
+        }
+        else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">No rentings available.</td>
+                </tr>
+            }
+
+    </tbody>
+</table>
+<script>
+    $(document).ready(function () {
+        const startDateInput = $("#startDateInput");
+        const endDateInput = $("#endDateInput");
+        const submitButton = $("#submitButton");
+
+        function validateDates() {
+            const startDate = new Date(startDateInput.val());
+            const endDate = new Date(endDateInput.val());
+            const currentDate = new Date();
+
+            currentDate.setHours(0, 0, 0, 0);
+            startDate.setHours(0, 0, 0, 0);
+
+            let isValid = true;
+            
+            if (isNaN(startDate.getTime()) || startDate < currentDate) {
+                $("#startDateError").text("Start date must be today or later.").show();
+                isValid = false;
+            } else {
+                $("#startDateError").text("").hide();
+            }
+            
+            if (isNaN(endDate.getTime()) || endDate <= startDate) {
+                $("#endDateError").text("End date must be after the start date.").show();
+                isValid = false;
+            } else {
+                $("#endDateError").text("").hide();
+            }
+        
+            submitButton.prop("disabled", !isValid);
+        }
+
+        startDateInput.on("input", validateDates);
+        endDateInput.on("input", validateDates);
+    });
+
+</script>
